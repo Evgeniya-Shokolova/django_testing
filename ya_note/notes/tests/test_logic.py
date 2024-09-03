@@ -6,20 +6,22 @@ from pytils.translit import slugify
 from notes.forms import WARNING
 
 
+User = get_user_model()
+
+
 class NoteLogic(TestCase):
 
     def setUp(self):
-        """Создаем авторизованного пользователя"""
-        self.author = Note.objects.create(username='Автор')
-        self.not_author = Note.objects.create(username='Не автор')
+        """Создаем пользователей"""
+        self.author = User.objects.create_user(username='Автор', password='password')
+        self.not_author = User.objects.create_user(username='Не автор', password='password')
 
-        """Создаем авторизованного клиента"""
+        """Создаем клиентов"""
         self.author_client = self.client
-        self.author_client.force_login(self.author)
+        self.author_client.login(username='Автор', password='password')
 
-        """Создаем клиента неавтора"""
         self.not_author_client = self.client
-        self.not_author_client.force_login(self.not_author)
+        self.not_author_client.login(username='Не автор', password='password')
 
         """Создаем заметку для тестов"""
         self.note = Note.objects.create(
