@@ -20,7 +20,7 @@ class NoteLogic(TestCase):
         """Создаем клиента неавтора"""
         self.not_author_client = self.client
         self.not_author_client.force_login(self.not_author)
-        
+
         """Создаем заметку для тестов"""
         self.note = Note.objects.create(
             title='Заголовок',
@@ -63,7 +63,8 @@ class NoteLogic(TestCase):
         self.form_data['slug'] = self.note.slug
         response = self.author_client.post(url, data=self.form_data)
 
-        self.assertFormError(response, 'form', 'slug', errors=(self.note.slug + WARNING))
+        self.assertFormError(response, 'form', 'slug',
+                             errors=(self.note.slug + WARNING))
         self.assertEqual(Note.objects.count(), 1)
 
     def test_empty_slug(self):

@@ -44,8 +44,7 @@ class TestContent(unittest.TestCase):
         self.assertNotIn(self.note, object_list)
 
     def test_pages_contains_form(self):
-        """Проверяем, что страницы содержат форму создания/редактирования заметки."""
-
+        """Страницы содержат форму создания/редактирования заметки."""
         url_create = reverse('notes:add')
         response_create = self.author_client.get(url_create)
         self.assertIn('form', response_create.context)

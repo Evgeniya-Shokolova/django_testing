@@ -137,8 +137,7 @@ def test_author_can_edit_comment(comment_setup):
     response = client.post(edit_url, data=form_data)
     assert response.status_code == HTTPStatus.FOUND
     assert response[
-        'Location'
-        ] == f'{reverse("news:detail",args=(news.id,))}#comments'
+        'Location'] == f'{reverse("news:detail",args=(news.id,))}#comments'
 
     comment.refresh_from_db()
     assert comment.text == 'Обновлённый комментарий'
