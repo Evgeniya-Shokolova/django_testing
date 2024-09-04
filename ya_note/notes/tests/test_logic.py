@@ -29,20 +29,21 @@ class TestLogic(TestCase):
         cls.form_data = {
             'title': 'Новый заголовок',
             'text': 'Новый текст',
-            'slug': 'Новый-slug',
+            'slug': 'new-slug',
         }
         cls.url_add = reverse('notes:add')
         cls.edit_url = reverse('notes:edit', args=(cls.note.slug,))
         cls.delete_url = reverse('notes:delete', args=(cls.note.slug,))
 
     def test_user_can_create_note(self):
-        url = reverse('notes:add')
+        url = self.url_add
         response = self.author_client.post(url, data=self.form_data)
 
         self.assertRedirects(response, reverse('notes:success'))
         self.assertEqual(Note.objects.count(), 2)
 
-        new_note = Note.objects.get(title=self.form_data['title'])
+        new_note = Note.objects.filter(title=self.form_data['title']).first()
+        self.assertIsNotNone(new_note)
         self.assertEqual(new_note.text, self.form_data['text'])
         self.assertEqual(new_note.slug, self.form_data['slug'])
         self.assertEqual(new_note.author, self.author)
@@ -78,7 +79,6 @@ class TestLogic(TestCase):
         self.assertEqual(new_note.slug, expected_slug)
 
     def test_author_can_edit_note(self):
-
         url = reverse('notes:edit', args=(self.note.slug,))
         response = self.author_client.post(url, self.form_data)
 
