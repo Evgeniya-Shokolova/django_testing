@@ -17,13 +17,13 @@ def news():
 @pytest.fixture
 def author(db):
     """Создаем автора для тестов."""
-    return User.objects.create_user(author='author', password='password')
+    return User.objects.create_user(username='author', password='password')
 
 
 @pytest.fixture
 def reader(db):
     """Создаем читателя для тестов."""
-    return User.objects.create_user(author='reader', password='password')
+    return User.objects.create_user(username='reader', password='password')
 
 
 @pytest.fixture

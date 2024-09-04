@@ -1,6 +1,6 @@
-import unittest
 from http import HTTPStatus
-from django.test import Client
+
+from django.test import Client, TestCase
 from django.urls import reverse
 from notes.models import Note
 from django.contrib.auth import get_user_model
@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class NotesRoutes(unittest.TestCase):
+class TestRoutes(TestCase):
 
     def setUp(self):
         self.client = Client()
