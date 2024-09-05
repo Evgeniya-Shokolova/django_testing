@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-import pytest 
+import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -52,7 +52,9 @@ def comments_for_news(test_news):
     author = User.objects.create(username='Комментатор')
     now = timezone.now()
     Comment.objects.bulk_create([
-        Comment(news=test_news, author=author, text=f'Tекст {index}', created=now + timedelta(days=index))
+        Comment(news=test_news, author=author,
+                text=f'Tекст {index}',
+                created=now + timedelta(days=index))
         for index in range(10)
     ])
     return Comment.objects.filter(news=test_news)
@@ -79,7 +81,8 @@ def reader():
 @pytest.fixture
 def comment(news, author):
     """Создаем комментарий для тестов."""
-    return Comment.objects.create(text='Текст комментария', news=news, author=author)
+    return Comment.objects.create(text='Текст комментария',
+                                  news=news, author=author)
 
 
 @pytest.fixture

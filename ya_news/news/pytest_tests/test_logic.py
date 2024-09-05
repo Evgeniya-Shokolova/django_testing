@@ -12,7 +12,8 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-def test_anonymous_user_cant_create_comment(creat_news_auth_for_comments, client):
+def test_anonymous_user_cant_create_comment(creat_news_auth_for_comments,
+                                            client):
     """Проверка, что анонимный пользователь не может создать комментарий."""
     news, _ = creat_news_auth_for_comments
     url = reverse('news:detail', args=(news.id,))
@@ -26,7 +27,7 @@ def test_anonymous_user_cant_create_comment(creat_news_auth_for_comments, client
 @pytest.mark.django_db
 def test_user_can_create_comment(new_auth_client):
     """Проверка, что авторизованный пользователь может создать комментарий."""
-    client, news = new_auth_client 
+    client, news = new_auth_client
     user = client.get('/').context['user']
 
     url = reverse('news:detail', args=[news.id])

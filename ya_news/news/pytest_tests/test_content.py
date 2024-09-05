@@ -19,7 +19,7 @@ def test_home_news_count(client, news_dates):
     assert news_count == settings.NEWS_COUNT_ON_HOME_PAGE
 
 
-@pytest.mark.django_db 
+@pytest.mark.django_db
 def test_home_news_order(client, news_dates):
     """Проверка порядка новостей на главной странице."""
     home_url = reverse('news:home')

@@ -13,7 +13,7 @@ User = get_user_model()
     ('news:detail', (1,)),
     ('users:login', None),
     ('users:logout', None),
-    ('users:signup', None),])
+    ('users:signup', None)])
 def test_pages_availability(client, url_name, args, news):
     """Проверка доступности страниц."""
     if args is None:
