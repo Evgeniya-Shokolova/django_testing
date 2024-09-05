@@ -6,32 +6,15 @@ from django.test import Client
 from django.urls import reverse
 
 from news.forms import BAD_WORDS, WARNING
-from news.models import Comment, News
+from news.models import Comment
 
 User = get_user_model()
 
 
-@pytest.fixture
-def news_setup(db):
-    """Создаем новость и пользователя для тестов комментариев."""
-    news = News.objects.create(title='Заголовок', text='Текст')
-    user = User.objects.create(username='Мимо Крокодил')
-    return news, user
-
-
-@pytest.fixture
-def auth_client(news_setup, client):
-    """Создаем авторизованный клиент."""
-    news, user = news_setup
-    auth_client = client
-    auth_client.force_login(user)
-    return auth_client, news
-
-
 @pytest.mark.django_db
-def test_anonymous_user_cant_create_comment(news_setup, client):
+def test_anonymous_user_cant_create_comment(creat_news_auth_for_comments, client):
     """Проверка, что анонимный пользователь не может создать комментарий."""
-    news, _ = news_setup
+    news, _ = creat_news_auth_for_comments
     url = reverse('news:detail', args=(news.id,))
     form_data = {'text': 'Текст комментария'}
 
@@ -41,10 +24,10 @@ def test_anonymous_user_cant_create_comment(news_setup, client):
 
 
 @pytest.mark.django_db
-def test_user_can_create_comment(auth_client):
+def test_user_can_create_comment(new_auth_client):
     """Проверка, что авторизованный пользователь может создать комментарий."""
-    client, news = auth_client
-    user = client.get('/').wsgi_request.user
+    client, news = new_auth_client 
+    user = client.get('/').context['user']
 
     url = reverse('news:detail', args=[news.id])
     form_data = {'text': 'Текст комментария'}
@@ -53,22 +36,24 @@ def test_user_can_create_comment(auth_client):
 
     assert response.status_code == HTTPStatus.FOUND
     assert response['Location'] == f'{url}#comments'
-
     comments_count = Comment.objects.count()
     assert comments_count == 1
 
     comment = Comment.objects.get()
-    assert comment.text == 'Текст комментария'
+
+    assert comment.text == form_data['text']
+
     assert comment.news == news
     assert comment.author == user
 
 
 @pytest.mark.django_db
-def test_user_cant_use_bad_words(auth_client):
+@pytest.mark.parametrize('bad_word', BAD_WORDS)
+def test_user_cant_use_bad_words(new_auth_client, bad_word):
     """Проверка, что пользователь не может использовать запрещенные слова."""
-    auth_client, news = auth_client
+    auth_client, news = new_auth_client
     url = reverse('news:detail', args=(news.id,))
-    bad_words_data = {'text': f'Какой-то текст, {BAD_WORDS[0]}, еще текст'}
+    bad_words_data = {'text': f'Какой-то текст, {bad_word}, еще текст'}
 
     response = auth_client.post(url, data=bad_words_data)
     assert response.status_code == HTTPStatus.OK
@@ -78,21 +63,10 @@ def test_user_cant_use_bad_words(auth_client):
     assert comments_count == 0
 
 
-@pytest.fixture
-def comment_setup(db):
-    """Создаем новые пользователи и комментарий."""
-    news = News.objects.create(title='Заголовок', text='Текст')
-    author = User.objects.create(username='Автор комментария')
-    comment = Comment.objects.create(
-        news=news, author=author,
-        text='Текст комментария')
-    return author, comment, news
-
-
 @pytest.mark.django_db
-def test_author_can_delete_comment(comment_setup):
+def test_author_can_delete_comment(new_auth_and_comment):
     """Проверка, что автор комментария может его удалить."""
-    author, comment, news = comment_setup
+    author, comment, news = new_auth_and_comment
     url_to_comments = reverse('news:detail', args=(news.id,)) + '#comments'
     delete_url = reverse('news:delete', args=(comment.id,))
 
@@ -108,9 +82,9 @@ def test_author_can_delete_comment(comment_setup):
 
 
 @pytest.mark.django_db
-def test_user_cant_delete_comment_of_another_user(comment_setup):
+def test_user_cant_delete_comment_of_another_user(new_auth_and_comment):
     """Пользователь не может удалить комментарий другого пользователя."""
-    author, comment, news = comment_setup
+    author, comment, news = new_auth_and_comment
     reader = User.objects.create(username='Читатель')
 
     client = Client()
@@ -125,9 +99,9 @@ def test_user_cant_delete_comment_of_another_user(comment_setup):
 
 
 @pytest.mark.django_db
-def test_author_can_edit_comment(comment_setup):
+def test_author_can_edit_comment(new_auth_and_comment):
     """Проверка, что автор комментария может его изменять."""
-    author, comment, news = comment_setup
+    author, comment, news = new_auth_and_comment
     edit_url = reverse('news:edit', args=(comment.id,))
     form_data = {'text': 'Обновлённый комментарий'}
 
@@ -138,15 +112,17 @@ def test_author_can_edit_comment(comment_setup):
     assert response.status_code == HTTPStatus.FOUND
     assert response[
         'Location'] == f'{reverse("news:detail",args=(news.id,))}#comments'
-
-    comment.refresh_from_db()
-    assert comment.text == 'Обновлённый комментарий'
+    updated_comment = Comment.objects.get(id=comment.id)
+    assert updated_comment.text == 'Обновлённый комментарий'
+    assert updated_comment.news == news
+    assert updated_comment.author == author
+    assert updated_comment.created == comment.created
 
 
 @pytest.mark.django_db
-def test_user_cant_edit_comment_of_another_user(comment_setup):
+def test_user_cant_edit_comment_of_another_user(new_auth_and_comment):
     """Пользователь не может редактировать комментарий другого пользователя."""
-    author, comment, news = comment_setup
+    author, comment, news = new_auth_and_comment
     reader = User.objects.create(username='Читатель')
 
     client = Client()
@@ -156,6 +132,8 @@ def test_user_cant_edit_comment_of_another_user(comment_setup):
 
     response = client.post(edit_url, data=form_data)
     assert response.status_code == HTTPStatus.NOT_FOUND
-
-    comment.refresh_from_db()
+    unchanged_comment = Comment.objects.get(id=comment.id)
     assert comment.text == 'Текст комментария'
+    assert unchanged_comment.news == comment.news
+    assert unchanged_comment.author == comment.author
+    assert unchanged_comment.created == comment.created

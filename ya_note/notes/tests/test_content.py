@@ -1,8 +1,9 @@
-from django.urls import reverse
-from django.test import Client, TestCase
-from notes.models import Note
-from notes.forms import NoteForm
 from django.contrib.auth import get_user_model
+from django.test import Client, TestCase
+from django.urls import reverse
+
+from notes.forms import NoteForm
+from notes.models import Note
 
 User = get_user_model()
 
@@ -17,7 +18,6 @@ class TestContent(TestCase):
 
         cls.author_client = Client()
         cls.author_client.force_login(cls.author)
-
         cls.not_author_client = Client()
         cls.not_author_client.force_login(cls.not_author)
 
@@ -31,25 +31,33 @@ class TestContent(TestCase):
     def test_notes_list_for_different_users(self):
         """Заметка видна автору."""
         url = reverse('notes:list')
+        test_cases = (
+            (self.author_client, True),
+            (self.not_author_client, False)
+        )
 
-        """Проверка для автора"""
-        response = self.author_client.get(url)
-        object_list = response.context['object_list']
-        self.assertIn(self.note, object_list)
+        for client, expected in test_cases:
+            with self.subTest(client=client):
+                response = client.get(url)
+                object_list = response.context['object_list']
+                if expected:
+                    self.assertIn(self.note, object_list)
+                else:
+                    self.assertNotIn(self.note, object_list)
 
-        """Проверка для не автора"""
-        response = self.not_author_client.get(url)
-        object_list = response.context['object_list']
-        self.assertNotIn(self.note, object_list)
+    def tearDown(self):
+        """Очищаем все заметки после каждого теста."""
+        Note.objects.all().delete()
 
     def test_pages_contains_form(self):
         """Страницы содержат форму создания/редактирования заметки."""
-        url_create = reverse('notes:add')
-        response_create = self.author_client.get(url_create)
-        self.assertIn('form', response_create.context)
-        self.assertIsInstance(response_create.context['form'], NoteForm)
+        url_checks_form = [
+            (reverse('notes:add'), 'add'),
+            (reverse('notes:edit', args=[self.note.slug]), 'edit'),
+        ]
 
-        url_edit = reverse('notes:edit', args=[self.note.slug])
-        response_edit = self.author_client.get(url_edit)
-        self.assertIn('form', response_edit.context)
-        self.assertIsInstance(response_edit.context['form'], NoteForm)
+        for url, args in url_checks_form:
+            with self.subTest(args=args):
+                response = self.author_client.get(url)
+                self.assertIn('form', response.context)
+                self.assertIsInstance(response.context['form'], NoteForm)
