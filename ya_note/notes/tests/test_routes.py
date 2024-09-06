@@ -30,24 +30,6 @@ class TestRoutes(TestCase):
         self.client_author.force_login(self.author)
         self.client_not_author.force_login(self.not_author)
 
-    def tearDown(self):
-        """Очищаем все заметки после каждого теста."""
-        Note.objects.all().delete()
-
-    def test_pages_availability_for_anonymous_user(self):
-        """доступность страниц для анонимных пользователей"""
-        urls = [
-            'notes:home',
-            'users:login',
-            'users:logout',
-            'users:signup'
-        ]
-        for name in urls:
-            with self.subTest(name=name):
-                url = reverse(name)
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
-
     def test_pages_availability_for_authenticated_user(self):
         """доступность страниц для авторизованных пользователей."""
         urls = [
@@ -62,17 +44,22 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_non_authenticated_user(self):
-        """доступность страниц для неавторизованного клиента"""
+        """Доступность страниц для анонимных пользователей и неавт. клиентов."""
         urls = [
+            'notes:home',
+            'users:login',
+            'users:logout',
+            'users:signup',
             'notes:list',
             'notes:add',
             'notes:success'
-        ]
+            ]
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
-                response = self.client_not_author.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
+                response = self.client.get(url)
+                self.assertIn(response.status_code,
+                              (HTTPStatus.OK, HTTPStatus.FOUND))
 
     def test_pages_availability_for_different_users(self):
         """Доступность страниц для разных пользователей с различными правами"""

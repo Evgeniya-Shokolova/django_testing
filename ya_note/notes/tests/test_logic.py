@@ -3,9 +3,11 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
+
+from pytils.translit import slugify
+
 from notes.forms import WARNING
 from notes.models import Note
-from pytils.translit import slugify
 
 
 User = get_user_model()
@@ -34,9 +36,17 @@ class TestLogic(TestCase):
         self.not_author_client = Client()
         self.not_author_client.force_login(self.not_author)
 
-    def tearDown(self):
-        """Очищаем все заметки после каждого теста."""
+    def test_user_can_create_note(self):
+        """Тест на создание заметки авторизованным пользователем."""
         Note.objects.all().delete()
+        response = self.author_client.post(self.url_add, data=self.form_data)
+        self.assertRedirects(response, reverse('notes:success'))
+        self.assertEqual(Note.objects.count(), 1)
+        new_note = Note.objects.last()
+        self.assertIsNotNone(new_note)
+        self.assertEqual(new_note.title, self.form_data['title'])
+        self.assertEqual(new_note.text, self.form_data['text'])
+        self.assertEqual(new_note.slug, self.form_data['slug'])
 
     def test_anonymous_user_cant_create_note(self):
         """Тест на создание заметки анонимным пользователем."""
@@ -57,11 +67,12 @@ class TestLogic(TestCase):
 
     def test_empty_slug(self):
         """Тест на пустой слаг."""
+        Note.objects.all().delete()
         self.form_data.pop('slug')
         response = self.author_client.post(self.url_add, data=self.form_data)
         self.assertRedirects(response, reverse('notes:success'))
         current_count = Note.objects.count()
-        self.assertEqual(current_count, 2)
+        self.assertEqual(current_count, 1)
         expected_slug = slugify(self.form_data['title'])
         new_note = Note.objects.get(title=self.form_data['title'])
         self.assertEqual(new_note.slug, expected_slug)

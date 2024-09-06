@@ -37,27 +37,24 @@ class TestContent(TestCase):
         )
 
         for client, expected in test_cases:
-            with self.subTest(client=client):
-                response = client.get(url)
-                object_list = response.context['object_list']
-                if expected:
-                    self.assertIn(self.note, object_list)
-                else:
-                    self.assertNotIn(self.note, object_list)
-
-    def tearDown(self):
-        """Очищаем все заметки после каждого теста."""
-        Note.objects.all().delete()
+            for client, expected in test_cases:
+                with self.subTest(client=client):
+                    response = client.get(url)
+                    object_list = response.context['object_list']
+                    self.assertIs(
+                        self.note in object_list,
+                        expected
+                    )
 
     def test_pages_contains_form(self):
         """Страницы содержат форму создания/редактирования заметки."""
         url_checks_form = [
-            (reverse('notes:add'), 'add'),
-            (reverse('notes:edit', args=[self.note.slug]), 'edit'),
+            reverse('notes:add'),
+            reverse('notes:edit', args=[self.note.slug]),
         ]
 
-        for url, args in url_checks_form:
-            with self.subTest(args=args):
+        for url in url_checks_form:
+            with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertIn('form', response.context)
                 self.assertIsInstance(response.context['form'], NoteForm)
