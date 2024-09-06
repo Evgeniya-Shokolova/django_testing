@@ -44,7 +44,7 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_non_authenticated_user(self):
-        """Доступность страниц для анонимных пользователей и неавт. клиентов."""
+        """Доступность страниц для анонимных польз-ей и неавт. клиентов."""
         urls = [
             'notes:home',
             'users:login',
@@ -52,8 +52,7 @@ class TestRoutes(TestCase):
             'users:signup',
             'notes:list',
             'notes:add',
-            'notes:success'
-            ]
+            'notes:success']
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
