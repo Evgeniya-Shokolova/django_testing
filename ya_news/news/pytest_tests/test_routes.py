@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 import pytest
-
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
@@ -10,34 +9,33 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('url_name, args', [
+@pytest.mark.parametrize('name, args', [
     ('news:home', None),
     ('news:detail', pytest.lazy_fixture('parametrs_url')),
     ('users:login', None),
     ('users:logout', None),
     ('users:signup', None)
 ])
-def test_pages_availability(client, url_name, args, news):
+def test_pages_availability(client, name, args):
     """Проверка доступности страниц."""
-    response = client.get(reverse(url_name, args=args))
+    url = reverse(name, args=args)
+    response = client.get(url)
     assert response.status_code == HTTPStatus.OK
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("user_fixture, expected_status", [
-    ('author', HTTPStatus.OK),
-    ('reader', HTTPStatus.NOT_FOUND)
+@pytest.mark.parametrize("client_fixture, expected_status", [
+    (pytest.lazy_fixture('auth_client'), HTTPStatus.OK),
+    (pytest.lazy_fixture('client'), HTTPStatus.FOUND)
 ])
 @pytest.mark.parametrize("name", ['news:edit', 'news:delete'])
-def test_availability_for_comment_edit_and_delete(client, create_comment,
-                                                  author, reader, user_fixture,
+def test_availability_for_comment_edit_and_delete(client_fixture,
+                                                  create_comment,
                                                   expected_status, name):
-
-    user = locals()[user_fixture]
-    client.force_login(user)
+    """Проверка доступности страниц редактирования и удаления комментариев."""
     comment = create_comment
     url = reverse(name, args=(comment.id,))
-    response = client.get(url)
+    response = client_fixture.get(url)
     assert response.status_code == expected_status
 
 

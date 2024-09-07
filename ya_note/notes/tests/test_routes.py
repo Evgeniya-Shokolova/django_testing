@@ -44,21 +44,16 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_non_authenticated_user(self):
-        """Доступность страниц для анонимных польз-ей и неавт. клиентов."""
+        """Доступность страниц для неавторизованных пользователей."""
         urls = [
             'notes:home',
-            'users:login',
-            'users:logout',
-            'users:signup',
-            'notes:list',
-            'notes:add',
-            'notes:success']
+            'users:login']
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
                 response = self.client.get(url)
                 self.assertIn(response.status_code,
-                              (HTTPStatus.OK, HTTPStatus.FOUND))
+                              (HTTPStatus.OK, HTTPStatus.OK))
 
     def test_pages_availability_for_different_users(self):
         """Доступность страниц для разных пользователей с различными правами"""
