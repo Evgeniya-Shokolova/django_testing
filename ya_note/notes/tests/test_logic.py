@@ -3,7 +3,6 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.urls import reverse
-from pytest_django.asserts import assertRedirects
 from pytils.translit import slugify
 
 from notes.forms import WARNING
