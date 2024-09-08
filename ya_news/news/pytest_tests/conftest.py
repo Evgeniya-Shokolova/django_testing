@@ -96,3 +96,10 @@ def news_dates():
 def parametrs_url(news):
     """Параметры URL для тестирования с идентификатором новости."""
     return (news.id,)
+
+
+@pytest.fixture
+def auth_reader(client, reader):
+    """Создаем авторизованный клиент для читателя."""
+    client.force_login(reader)
+    return client

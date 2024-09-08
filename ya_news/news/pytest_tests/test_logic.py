@@ -82,12 +82,11 @@ def test_author_can_edit_comment(edit_url, create_comment,
 
 
 @pytest.mark.django_db
-def test_user_cant_edit_comment_of_another_user(create_comment, auth_client,
+def test_user_cant_edit_comment_of_another_user(create_comment, auth_reader,
                                                 edit_url, reader):
     """Пользователь не может редактировать комментарий другого пользователя."""
     comment = create_comment
-    auth_client.force_login(reader)
-    response = auth_client.post(edit_url, data=NEW_COMMENT)
+    response = auth_reader.post(edit_url, data=NEW_COMMENT)
     assert response.status_code == HTTPStatus.NOT_FOUND
     unchanged_comment = Comment.objects.get(id=comment.id)
     assert unchanged_comment.text == comment.text

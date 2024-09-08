@@ -47,13 +47,14 @@ class TestRoutes(TestCase):
         """Доступность страниц для неавторизованных пользователей."""
         urls = [
             'notes:home',
-            'users:login']
+            'users:login',
+            'users:signup',
+            'users:logout']
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
                 response = self.client.get(url)
-                self.assertIn(response.status_code,
-                              (HTTPStatus.OK, HTTPStatus.OK))
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_different_users(self):
         """Доступность страниц для разных пользователей с различными правами"""
